@@ -1,0 +1,11 @@
+.addProducts{
+    height: 100%;
+    align-content: center;
+}
+
+.addProducts form{
+    border: 1px solid;
+    margin: auto;
+    width: 50%;
+    padding: 10px;
+}

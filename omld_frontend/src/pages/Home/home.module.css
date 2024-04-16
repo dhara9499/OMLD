@@ -1,0 +1,18 @@
+/* a {
+    cursor: pointer;
+    text-decoration: none !important;
+    font-size: 1.3rem;
+    line-height: 1.618;
+    outline: 0;
+}
+
+a.card-block {
+    position: relative;
+    overflow: hidden;
+    height: 100%
+} */
+
+.homeScreen {
+    align-content: center;
+    height: 100%;
+}
