@@ -38,7 +38,10 @@ class AuthController extends Controller
 
     public function login(LoginRequest $request)
     {
+       
         $credentials = $request->validated();
+        
+        
         if (!Auth::attempt($credentials)) {
             return response([
                 'message' => 'Provided email or password is incorrect'
@@ -58,4 +61,11 @@ class AuthController extends Controller
         $user->currentAccessToken()->delete();
         return response('', 204);
     }
+
+    // public function   test() {
+    //     $user = User::find(2);
+    //     echo "<pre>";
+    //     print_r($user);
+    //     die;
+    // }
 }
