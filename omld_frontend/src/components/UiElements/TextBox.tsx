@@ -9,6 +9,7 @@ interface TextBoxProps extends HTMLProps<HTMLInputElement> {
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   required?: boolean;
+  disabled?: boolean;
 }
 
 const TextBox = forwardRef<HTMLInputElement, TextBoxProps>((props, ref) =>  { 
@@ -18,7 +19,7 @@ const TextBox = forwardRef<HTMLInputElement, TextBoxProps>((props, ref) =>  {
     placeholder = '', 
     value, 
     onChange, 
-    required = false  } = props;
+    required = false, disabled = false  } = props;
   return (
     <div className="mb-4.5 gap-4 flex items-center gap-4 p-4">
       <Label id={id} label = {label} required = {required} />
@@ -30,6 +31,7 @@ const TextBox = forwardRef<HTMLInputElement, TextBoxProps>((props, ref) =>  {
         ref={ref}
         onChange={onChange}
         required={required}
+        disabled = {disabled}
         className="w-full flex-1  rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
       />
     </div>

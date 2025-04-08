@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('product', function (Blueprint $table) {
             $table->integerIncrements('productId')->primary()->unsigned();
             $table->string('productType', 32)->default('simple');
-            $table->string('sku')->nullable();
+            $table->string('sku')->nullable()->unique();
             $table->smallInteger('entityTypeId')->unsigned()->default(0);
             $table->foreign('entityTypeId')->references('entityTypeId')->on('entity_type');
             $table->timestamps();

@@ -25,6 +25,9 @@ import ManageProducts from "./pages/Products/ManageProducts";
 import AddAttributes from "./pages/Attributes/AddAttributes";
 import ManageAttributes from "./pages/Attributes/ManageAttributes";
 import AddAttribute from "./pages/Attributes/AddAttribute";
+import AddProduct from "./pages/Products/AddProduct";
+import ManageOrders from "./pages/Orders/ManageOrders";
+import AddOrder from "./pages/Orders/AddOrder";
 
 function App() {
     const [loading, setLoading] = useState<boolean>(true);
@@ -85,7 +88,27 @@ function App() {
                         </>
                     }
                 />
+                 <Route
+                    path="/products/add-product"
+                   Component={AddProduct}
+                />
                 {/* products */}
+
+                {/* orders */}
+                <Route
+                    path="/orders/manage-orders"
+                    element={
+                        <>
+                            <PageTitle title="Add Orders | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+                            <ManageOrders />
+                        </>
+                    }
+                />
+                <Route
+                    path="/orders/add-order"
+                   Component={AddOrder}
+                />
+                {/* orders */}
 
                 {/* attributes */}
                 <Route
@@ -171,7 +194,7 @@ function App() {
                     path="/auth/signin"
                     element={
                         <>
-                            <PageTitle title="Signin | Om Lights & Decor" />
+                            <PageTitle title="Signin" />
                             <SignIn />
                         </>
                     }

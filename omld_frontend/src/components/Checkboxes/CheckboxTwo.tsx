@@ -1,21 +1,32 @@
+import React, { useEffect } from 'react';
 import { useState } from 'react';
 
-const CheckboxTwo = () => {
-  const [isChecked, setIsChecked] = useState<boolean>(false);
+
+interface checkboxProps {
+  id: string;
+  updateValue: (id: string, isChecked : boolean) => void;
+  defaultChecked?: boolean;
+}
+
+
+
+const CheckboxTwo : React.FC<checkboxProps> = ({ id, updateValue,defaultChecked = false}) => {
+  const [isChecked, setIsChecked] = useState<boolean>(defaultChecked);
 
   return (
     <div>
       <label
-        htmlFor="checkboxLabelTwo"
+        htmlFor={id}
         className="flex cursor-pointer select-none items-center"
       >
         <div className="relative">
           <input
             type="checkbox"
-            id="checkboxLabelTwo"
+            id={id}
             className="sr-only"
-            onChange={() => {
+            onChange={(e) => {
               setIsChecked(!isChecked);
+              updateValue(id, e.target.checked);
             }}
           />
           <div
@@ -41,7 +52,6 @@ const CheckboxTwo = () => {
             </span>
           </div>
         </div>
-        Checkbox Text
       </label>
     </div>
   );
