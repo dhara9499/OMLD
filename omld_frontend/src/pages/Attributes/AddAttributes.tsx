@@ -43,7 +43,7 @@ const AddAttributes = () => {
                         header: true,
                         skipEmptyLines: true,
                         complete: (results) => {
-                          // set data
+                            // set data
                             setData(results.data);
                         },
                         error: (error) => {
@@ -88,13 +88,32 @@ const AddAttributes = () => {
         }
     };
 
+    const handleDownloadCSV = async () => {
+        try {
+            const response = await axiosClient
+                .get("/downloadAttributeSampleCsv", {
+                    responseType: 'blob'
+                });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'attributeSampleCsv.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        catch (error) {
+            setMessages([error]);
+        }
+    }
+
     return (
         <DefaultLayout>
             <Breadcrumb pageName="Add Attributes" />
             {messages && messages.length > 0 && <AlertsRed
-                            errors={messages}
-                            onClick={handleErrorClose}
-                        />}
+                errors={messages}
+                onClick={handleErrorClose}
+            />}
             <form
                 onSubmit={(e) => e.preventDefault()}
                 encType="multiple/form-data"
@@ -112,6 +131,7 @@ const AddAttributes = () => {
                 <div className="md:p-6  flex flex-wrap gap-5 xl:gap-10">
                     <Button1 title="Add Attributes" onClick={handleUpload} />
                     <Button2 title="Cancel" onClick={handleCancel} />
+                    <Button1 title="Download Sample Csv" onClick={handleDownloadCSV} />
                 </div>
             </form>
         </DefaultLayout>

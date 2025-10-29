@@ -24,56 +24,11 @@ import PrintOrder from "./PrintOrder";
 
 const AddOrder: React.FC = () => {
     const [messages, setMessages] = useState<string[]>([]);
-    const [categories, setCategories] = useState<
-        { key: string | number; value: string | number }[]
-    >([]);
 
     const [rows, setRows] = useState<any>([]);
-    const [category, setCategory] = useState<string>("");
-
-    const updateValue = (newValue, id) => {
-        if (id == "category") {
-            setCategories(newValue);
-        }
-    };
 
     const handleErrorClose = () => {
         setMessages([]);
-    };
-
-    const fetchCategories = async () => {
-        await axiosClient
-            .get("/getCategories")
-            .then(({ data }) => {
-                setCategories(data);
-            })
-            .catch((err) => {
-                const response = err.response;
-                if (response && response.status === 422) {
-                    setMessages([response.data.message]);
-                }
-            });
-    };
-
-    const handleInputChange = (index, field, value) => {
-        const newRows = [...rows];
-        newRows[index][field] = value;
-        setRows(newRows);
-    };
-
-    const handleRadioChange = (index) => {
-        const newRows = rows.map((row, i) => ({
-            ...row,
-            defaultValue: i === index,
-        }));
-        setRows(newRows);
-    };
-
-    const deleteRow = (index, event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        const newRows = rows.filter((_, i) => i !== index);
-        setRows(newRows);
     };
 
     const [activeSection, setActiveSection] = useState(0);

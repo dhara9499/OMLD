@@ -88,10 +88,12 @@ function App() {
                         </>
                     }
                 />
-                 <Route
+                <Route
                     path="/products/add-product"
-                   Component={AddProduct}
+                    Component={AddProduct}
                 />
+
+                <Route path="/products/add-product/:id" Component={AddProduct} />
                 {/* products */}
 
                 {/* orders */}
@@ -106,7 +108,7 @@ function App() {
                 />
                 <Route
                     path="/orders/add-order"
-                   Component={AddOrder}
+                    Component={AddOrder}
                 />
                 {/* orders */}
 
@@ -122,8 +124,23 @@ function App() {
                 />
                 <Route
                     path="/attributes/add-attribute"
-                   Component={AddAttribute}
+                    element={
+                        <>
+                            <PageTitle title="Add attribute | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+                            <AddAttribute />
+                        </>
+                    }
                 />
+                <Route
+                    path="/attributes/add-attribute/:attributeId"
+                    element={
+                        <>
+                            <PageTitle title="Edit attribute | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+                            <AddAttribute />
+                        </>
+                    }
+                />
+
                 <Route
                     path="/attributes/manage-attributes"
                     element={
@@ -171,7 +188,7 @@ function App() {
                         </>
                     }
                 />
-                
+
                 <Route
                     path="/ui/alerts"
                     element={

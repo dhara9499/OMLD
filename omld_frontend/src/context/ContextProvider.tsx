@@ -21,9 +21,9 @@ const initialState: StateContextType = {
     user: null, // Initialize user property
     token: null,
     notification: null,
-    setUser: () => {},
-    setToken: () => {},
-    setNotification: () => {},
+    setUser: () => { },
+    setToken: () => { },
+    setNotification: () => { },
 };
 
 const StateContext = createContext<StateContextType>(initialState);

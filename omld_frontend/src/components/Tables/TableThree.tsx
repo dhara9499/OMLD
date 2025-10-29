@@ -1,38 +1,21 @@
 import React from "react";
-import { Package } from "../../types/package";
-
-const packageData: Package[] = [
-    {
-        name: "Free package",
-        price: 0.0,
-        invoiceDate: `Jan 13,2023`,
-        status: "Paid",
-    },
-    {
-        name: "Standard Package",
-        price: 59.0,
-        invoiceDate: `Jan 13,2023`,
-        status: "Paid",
-    },
-    {
-        name: "Business Package",
-        price: 99.0,
-        invoiceDate: `Jan 13,2023`,
-        status: "Unpaid",
-    },
-    {
-        name: "Standard Package",
-        price: 59.0,
-        invoiceDate: `Jan 13,2023`,
-        status: "Pending",
-    },
-];
+import { useNavigate, useLocation } from "react-router-dom";
 
 const TableThree = (props: any) => {
-    const data = props.data;
-    console.log(data);
-    const displayColumns = props.displayColumns;
-    const columnsTitle = props.columnsTitle;
+    const { data, displayColumns, columnsTitle, filters, handleFilterChange, onEditClick, onDeleteClick } = props;
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    const handleEdit = (rowData: any) => {
+        if (onEditClick) {
+            onEditClick(rowData);
+        } else {
+            const path = location.pathname.includes('products') 
+                ? `/products/add-product/${rowData.id}`
+                : `/attributes/add-attribute/${rowData.attributeId}`;
+            navigate(path);
+        }
+    };
 
     return (
         <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
@@ -41,35 +24,46 @@ const TableThree = (props: any) => {
                     {columnsTitle && columnsTitle.length > 0 && (
                         <thead>
                             <tr className="bg-gray-2 text-left dark:bg-meta-4">
-                                {columnsTitle.map((title) => (
-                                    <th className="min-w-[220px] py-4 px-4 font-medium text-black dark:text-white xl:pl-11">
+                                {columnsTitle.map((title, index) => (
+                                    <th key={index} className="min-w-[220px] py-4 px-4 font-medium text-black dark:text-white xl:pl-11">
                                         {title}
                                     </th>
                                 ))}
                                 <th>Actions</th>
+                            </tr>
+                            <tr className="bg-gray-2 text-left dark:bg-meta-4">
+                                {displayColumns.map((column, index) => (
+                                    <th key={index} className="min-w-[220px] py-4 px-4 font-medium text-black dark:text-white xl:pl-11">
+                                        <input
+                                            type="text"
+                                            placeholder={`Filter ${columnsTitle[index]}`}
+                                            value={filters[column] || ''}
+                                            onChange={(e) => handleFilterChange(e, column)}
+                                            className="w-full rounded-md border border-stroke bg-transparent py-2 px-4 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                                        />
+                                    </th>
+                                ))}
+                                <th></th>
                             </tr>
                         </thead>
                     )}
 
                     {data && data.length > 0 && (
                         <tbody>
-                            {data.map((productData, key) => (
+                            {data.map((rowData, key) => (
                                 <tr key={key}>
                                     {displayColumns.map((displayColumn) => (
-                                        <td className="border-b border-[#eee] py-5 px-4 pl-9 dark:border-strokedark xl:pl-11">
+                                        <td key={displayColumn} className="border-b border-[#eee] py-5 px-4 pl-9 dark:border-strokedark xl:pl-11">
                                             <p className="text-sm">
-                                                {displayColumn == "sellingPrice"
-                                                    ? "\u{20B9}" +
-                                                      productData[displayColumn]
-                                                    : productData[
-                                                          displayColumn
-                                                      ]}
+                                                {displayColumn === "sellingPrice"
+                                                    ? `₹${rowData[displayColumn]}`
+                                                    : rowData[displayColumn]}
                                             </p>
                                         </td>
                                     ))}
                                     <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                                         <div className="flex items-center space-x-3.5">
-                                            <button className="hover:text-primary">
+                                            <button className="hover:text-primary" onClick={() => handleEdit(rowData)}>
                                                 <svg
                                                     className="fill-current"
                                                     width="18"
@@ -79,7 +73,7 @@ const TableThree = (props: any) => {
                                                     xmlns="http://www.w3.org/2000/svg"
                                                 >
                                                     <path
-                                                        d="M8.99981 14.8219C3.43106 14.8219 0.674805 9.50624 0.562305 9.28124C0.47793 9.11249 0.47793 8.88749 0.562305 8.71874C0.674805 8.49374 3.43106 3.20624 8.99981 3.20624C14.5686 3.20624 17.3248 8.49374 17.4373 8.71874C17.5217 8.88749 17.5217 9.11249 17.4373 9.28124C17.3248 9.50624 14.5686 14.8219 8.99981 14.8219ZM1.85605 8.99999C2.4748 10.0406 4.89356 13.5562 8.99981 13.5562C13.1061 13.5562 15.5248 10.0406 16.1436 8.99999C15.5248 7.95936 13.1061 4.44374 8.99981 4.44374C4.89356 4.44374 2.4748 7.95936 1.85605 8.99999Z"
+                                                        d="M8.99981 14.8219C3.43106 14.8219 0.674805 9.50624 0.562305 9.28124C0.47793 9.11249 0.47793 8.88749 0.562305 8.71874C0.674805 8.49374 3.43106 3.20624 8.99981 3.20624C14.5686 3.20624 17.3248 8.49374 17.4373 8.71874C17.5217 8.88749 17.5217 9.11249 17.4373 9.28124C17.3248 9.50624 14.5686 14.8219 8.99981 14.8219ZM1.85605 9.00124C2.4748 10.0825 4.89356 13.5219 8.99981 13.5219C13.1061 13.5219 15.5248 10.0825 16.1436 9.00124C15.5248 7.92 13.1061 4.50624 8.99981 4.50624C4.89356 4.50624 2.4748 7.92 1.85605 9.00124Z"
                                                         fill=""
                                                     />
                                                     <path
@@ -88,7 +82,7 @@ const TableThree = (props: any) => {
                                                     />
                                                 </svg>
                                             </button>
-                                            <button className="hover:text-primary">
+                                            <button className="hover:text-primary" onClick={() => onDeleteClick(rowData)}>
                                                 <svg
                                                     className="fill-current"
                                                     width="18"

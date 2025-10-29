@@ -13,9 +13,9 @@ class Attribute extends Model
 
     protected $primaryKey = 'attributeId';
 
-    public function attributeOptions()
+    public function options()
     {
-        return $this->hasMany(AttributeOption::class, 'attribute_id');
+        return $this->hasMany(AttributeOption::class, 'attributeId');
     }
 
     public function productInt()

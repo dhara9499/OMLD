@@ -8,7 +8,6 @@ import 'jsvectormap/dist/css/jsvectormap.css';
 import 'flatpickr/dist/flatpickr.min.css';
 import { ContextProvider } from './context/ContextProvider';
 import {RouterProvider} from "react-router-dom";
-import router from "./App.tsx";
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>

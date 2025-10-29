@@ -1,10 +1,9 @@
 import React, {
-    createRef,
-    FormEvent,
     useRef,
     useState,
     useEffect,
 } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import DefaultLayout from "../../layout/DefaultLayout";
 import Breadcrumb from "../../components/Breadcrumbs/Breadcrumb";
 import Button1 from "../../components/UiElements/Button1";
@@ -13,38 +12,80 @@ import BackLink from "../../components/UiElements/BackLink";
 import TextBox from "../../components/UiElements/TextBox";
 import Dropdown from "../../components/UiElements/Dropdown";
 import AlertsRed from "../../components/UiElements/AlertsRed";
-import axios from "axios";
 import axiosClient from "../../axios-client";
+import Toast from "../../common/Toast";
 
-const AddAttribute: React.FC = () => {
+
+const AddAttribute = () => {
+    const { attributeId } = useParams();
+    const navigate = useNavigate();
     const attributeCodeRef = useRef<HTMLInputElement>(null);
     const frontendLabelRef = useRef<HTMLInputElement>(null);
     const defaultValueRef = useRef<HTMLInputElement>(null);
-    const [messages, setMessages] = useState<string[]>([]);
-    const [entityTypeOptions, setEntityTypeOptions] = useState<
-        { key: string | number; value: string | number }[]
-    >([]);
-    const [rows, setRows] = useState<any>([]); //when frontend type option selected
+    const [entityTypeOptions, setEntityTypeOptions] = useState<any[]>([]);
     const [entityTypeOption, setEntityTypeOption] = useState<string>("");
     const [backendTypeOption, setBackendTypeOption] = useState<string>("");
     const [frontendTypeOption, setFrontendTypeOption] = useState<string>("");
     const [isRequiredOption, setIsRequiredOption] = useState<string>("");
+    const [rows, setRows] = useState<any[]>([]);
     const [isEditing, setIsEditing] = useState<boolean>(false);
+    const [attributeCodeError, setAttributeCodeError] = useState<string>("");
+    const [frontLabelError, setFrontLabelError] = useState<string>("");
+    const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
-    const updateValue = (newValue, id) => {
-        if (id == "entityType") {
+
+    useEffect(() => {
+        if (attributeId) {
+            setIsEditing(true);
+            fetchAttributeData();
+        }
+    }, [attributeId]);
+
+    const fetchAttributeData = async () => {
+        try {
+            const { data } = await axiosClient.get(`/getAttribute/${attributeId}`);
+            if (data) {
+                if (attributeCodeRef.current) attributeCodeRef.current.value = data.attributeCode;
+                if (frontendLabelRef.current) frontendLabelRef.current.value = data.frontendLabel;
+                if (defaultValueRef.current) defaultValueRef.current.value = data.defaultValue || '';
+
+                console.log(data.entityTypeId);
+                setEntityTypeOption(data.entityTypeId);
+                setBackendTypeOption(data.backendType);
+                setFrontendTypeOption(data.frontendType);
+                setIsRequiredOption(data.isRequired ? 'yes' : 'no');
+
+                if (data.options && data.options.length > 0) {
+                    setRows(data.options.map((option: any) => ({
+                        OptionLabel: option.optionLabel,
+                        Value: option.value,
+                        defaultValue: option.isDefault === 1,
+                    })));
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching attribute data:', error);
+            setToast({ type: "error", message: "Failed to fetch attribute data" });
+        }
+    };
+
+    const updateValue = (newValue: string, id: string) => {
+        console.log(newValue, id);
+        if (id === "entityType") {
+            console.log(newValue);
             setEntityTypeOption(newValue);
-        } else if (id == "backendType") {
+        } else if (id === "backendType") {
             setBackendTypeOption(newValue);
-        } else if (id == "frontendType") {
+        } else if (id === "frontendType") {
             setFrontendTypeOption(newValue);
             setRows([]);
-        } else if (id == "isRequired") {
+        } else if (id === "isRequired") {
             setIsRequiredOption(newValue);
         }
     };
 
     const backendTypeOptions = [
+        { key: '', value: 'Select Backend Type' },
         { key: "varchar", value: "Varchar" },
         { key: "text", value: "Text" },
         { key: "int", value: "Integer" },
@@ -53,6 +94,7 @@ const AddAttribute: React.FC = () => {
     ];
 
     const frontendTypeOptions = [
+        { key: '', value: 'Select Frontend Type' },
         { key: "text", value: "Text" },
         { key: "int", value: "Integer" },
         { key: "decimal", value: "Decimal" },
@@ -61,63 +103,72 @@ const AddAttribute: React.FC = () => {
     ];
 
     const isRequiredOptions = [
+        { key: '', value: 'Select Is Required' },
         { key: "no", value: "No" },
         { key: "yes", value: "Yes" },
     ];
 
-    const addAttribute = () => {
+    const handleSubmit = async () => {
         if (!attributeCodeRef.current?.value) {
-            messages.push("Attribute code is required");
-            setMessages(messages);
+            setToast({ type: "error", message: "Attribute code is required" });
+            return;
+        }
+        if (attributeCodeError) {
+            setToast({ type: "error", message: "Attribute code must start with a letter and can only contain letters, numbers, hyphens, and underscores" });
             return;
         }
 
         if (!frontendLabelRef.current?.value) {
-            messages.push("Label is required");
-            setMessages(messages);
+            setToast({ type: "error", message: "Label is required" });
             return;
         }
 
-        const postData = {
+        if (frontLabelError) {
+            setToast({ type: "error", message: "Frontend Label must start with alphabets." });
+            return;
+        }
+
+        const payload = {
             attributeCode: attributeCodeRef.current.value,
             frontendLabel: frontendLabelRef.current.value,
             entityTypeId: entityTypeOption,
             backendType: backendTypeOption,
             frontendType: frontendTypeOption,
-            isRequired: isRequiredOption,
+            isRequired: isRequiredOption === 'yes' ? 1 : 0,
             defaultValue: defaultValueRef.current?.value,
             options: rows.map((row) => ({
-                Value: row.Value,
-                defaultValue: row.defaultValue,
+                optionLabel: row.OptionLabel,
+                value: row.Value,
+                isDefault: row.defaultValue ? 1 : 0,
             })),
         };
 
-        console.log(postData);
+        try {
+            let response;
+            if (isEditing) {
+                response = await axiosClient.put(`/updateAttribute/${attributeId}`, payload);
+            } else {
+                response = await axiosClient.post("/addAttribute", payload);
+            }
 
-        axiosClient
-            .post("/addAttribute", postData)
-            .then(({ data }) => {
-                const response = data;
-                console.log(data);
-                console.log(response.status);
-                if (response && response.status == 200) {
-                    setMessages([response.message]);
-                } else {
+            if (response.data.status === 200) {
+                setToast({ type: "success", message: response.data.message });
+                if (!isEditing) {
                     clearFields();
-                    setMessages([response.message]);
+                } else {
+                    navigate('/attributes/manage-attributes');
                 }
-            })
-            .catch((err) => {
-                const response = err.response;
-                if (response && response.status === 422) {
-                    setMessages([response.data.message]);
-                }
-            });
+            }
+        } catch (error: any) {
+            if (error.response?.status === 422) {
+                setToast({ type: "error", message: error.response.data.message });
+            } else {
+                setToast({ type: "error", message: "An error occurred" });
+            }
+        }
     };
 
-    const handleErrorClose = () => {
-        setMessages([]);
-    };
+
 
     const clearFields = () => {
         if (attributeCodeRef.current) attributeCodeRef.current.value = '';
@@ -127,21 +178,18 @@ const AddAttribute: React.FC = () => {
         setBackendTypeOption('');
         setFrontendTypeOption('');
         setIsRequiredOption('');
-
-    }
+        setRows([]);
+    };
 
     const fetchOptions = async () => {
-        await axiosClient
-            .get("/getEntityTypeOptions")
-            .then(({ data }) => {
-                setEntityTypeOptions(data);
-            })
-            .catch((err) => {
-                const response = err.response;
-                if (response && response.status === 422) {
-                    setMessages([response.data.message]);
-                }
-            });
+        try {
+            const { data } = await axiosClient.get("/getEntityTypeOptions");
+            setEntityTypeOptions([{ value: 'Select Entity Type', key: '' }, ...data]);
+        } catch (error: any) {
+            if (error.response?.status === 422) {
+                setToast({ type: "error", message: error.response.data.message });
+            }
+        }
     };
 
     useEffect(() => {
@@ -150,20 +198,19 @@ const AddAttribute: React.FC = () => {
 
     const addOption = () => {
         if (rows.length > 0) {
-            rows.push([{ OptionLabel: "", Value: "", defaultValue: false }]);
-            setRows(rows);
+            setRows([...rows, { OptionLabel: "", Value: "", defaultValue: false }]);
         } else {
-            setRows([{OptionLabel: "", Value: "", defaultValue: false }]);
+            setRows([{ OptionLabel: "", Value: "", defaultValue: false }]);
         }
     };
 
-    const handleInputChange = (index, field, value) => {
+    const handleInputChange = (index: number, field: string, value: any) => {
         const newRows = [...rows];
         newRows[index][field] = value;
         setRows(newRows);
     };
 
-    const handleRadioChange = (index) => {
+    const handleRadioChange = (index: number) => {
         const newRows = rows.map((row, i) => ({
             ...row,
             defaultValue: i === index,
@@ -171,17 +218,19 @@ const AddAttribute: React.FC = () => {
         setRows(newRows);
     };
 
-    const deleteRow = (index, event) => {
+    const deleteRow = (index: number, event: React.MouseEvent) => {
         event.preventDefault();
         event.stopPropagation();
         const newRows = rows.filter((_, i) => i !== index);
         setRows(newRows);
     };
 
+    console.log(toast);
+
     return (
         <DefaultLayout>
-            <Breadcrumb pageName="Add Attribute" />
-            <PageTitle title="Add Attribute" />
+            <Breadcrumb pageName={isEditing ? "Edit Attribute" : "Add Attribute"} />
+            <PageTitle title={isEditing ? "Edit Attribute" : "Add Attribute"} />
             <div className="flex justify-end">
                 <BackLink to="/attributes/manage-attributes"></BackLink>
             </div>
@@ -190,100 +239,117 @@ const AddAttribute: React.FC = () => {
                 encType="multiple/form-data"
             >
                 <div className="p-6.5">
-                    {/* attribute code */}
                     <TextBox
                         ref={attributeCodeRef}
-                        id="attruibuteCode"
+                        id="attributeCode"
                         label="Attribute Code"
                         placeholder="Enter attribute code"
                         required={true}
+                        disabled={isEditing}
+                        error={attributeCodeError}
+                        onChange={(e) => {
+                            const value = e.target.value;
+                            const attributeCodeRegex = /^[_a-zA-Z][a-zA-Z0-9_-]*$/;
+                            if (value && !attributeCodeRegex.test(value)) {
+                                setAttributeCodeError("Attribute code must start with a letter and can only contain letters, numbers, hyphens, and underscores");
+                            } else {
+                                setAttributeCodeError("");
+                            }
+                        }}
                     />
 
-                    {/* attribute code */}
-                    {/* frontend label */}
                     <TextBox
                         id="frontendLabel"
                         label="Frontend Label"
                         ref={frontendLabelRef}
                         placeholder="Enter Frontend Label"
                         required={true}
+                        error={frontLabelError}
+                        onChange={(e) => {
+                            const value = e.target.value;
+                            const frontendLabelRegex = /^[A-Za-z].*$/;
+                            if (value && !frontendLabelRegex.test(value)) {
+                                setFrontLabelError("Frontend Label must start with a alphabets.");
+                            } else {
+                                setFrontLabelError("");
+                            }
+                        }}
                     />
-                    {/* frontend label */}
-
-                    {/* entity type */}
 
                     <Dropdown
                         id="entityType"
                         value={entityTypeOption}
                         updateValue={updateValue}
                         label="Entity Type"
-                        placeholder="Select Entity Type"
                         options={entityTypeOptions}
+                        required={true}
                     />
-                    {/* entity type */}
 
-                    {/*
-                        //  {/* backend type */}
                     <Dropdown
                         id="backendType"
                         value={backendTypeOption}
                         updateValue={updateValue}
                         label="Backend Type"
-                        placeholder="Select Backend Type"
                         options={backendTypeOptions}
+                        required={true}
                     />
 
-                    {/* frontend type */}
                     <Dropdown
                         id="frontendType"
                         value={frontendTypeOption}
                         updateValue={updateValue}
                         label="Frontend Type"
-                        placeholder="Select frontend Type"
                         options={frontendTypeOptions}
+                        required={true}
                     />
-                    {/* frontend type */}
 
-                    {frontendTypeOption == "select" && (
-                        <div className="container mx-auto p-4">
-                            <table
-                                className="min-w-full divide-y divide-gray-200"
-                                id="attribute_options"
-                            >
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th
-                                            scope="col"
-                                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                        >
-                                            Option Label
-                                        </th>
-                                        <th
-                                            scope="col"
-                                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                        >
-                                            Value
-                                        </th>
-                                        <th
-                                            scope="col"
-                                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                        >
-                                            Is Default
-                                        </th>
-                                        <th
-                                            scope="col"
-                                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                        >
-                                            <Button1
-                                                title="Add Option"
-                                                onClick={addOption}
-                                            />
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                    {rows.length > 0 &&
-                                        rows.map((row, index) => (
+                    <Dropdown
+                        id="isRequired"
+                        value={isRequiredOption}
+                        updateValue={updateValue}
+                        label="Is Required"
+                        options={isRequiredOptions}
+                        required={true}
+                    />
+
+                    <TextBox
+                        id="defaultValue"
+                        label="Default Value"
+                        ref={defaultValueRef}
+                        placeholder="Enter Default Value"
+                    />
+
+                    {frontendTypeOption === "select" && (
+                        <div className="mt-4">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-medium">Options</h3>
+                                <button
+                                    onClick={addOption}
+                                    className="bg-primary text-white px-4 py-2 rounded-md"
+                                >
+                                    Add Option
+                                </button>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead>
+                                        <tr>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Option Label
+                                            </th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Value
+                                            </th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Is Default
+                                            </th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Action
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                        {rows.map((row, index) => (
                                             <tr key={index}>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     <input
@@ -316,18 +382,14 @@ const AddAttribute: React.FC = () => {
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     <input
                                                         type="radio"
-                                                        checked={
-                                                            row.defaultValue
-                                                        }
+                                                        checked={row.defaultValue}
                                                         onChange={() =>
-                                                            handleRadioChange(
-                                                                index
-                                                            )
+                                                            handleRadioChange(index)
                                                         }
-                                                        className="border"
+                                                        className="form-radio h-4 w-4 text-primary"
                                                     />
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     <button
                                                         onClick={(e) =>
                                                             deleteRow(index, e)
@@ -339,38 +401,25 @@ const AddAttribute: React.FC = () => {
                                                 </td>
                                             </tr>
                                         ))}
-                                </tbody>
-                            </table>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     )}
 
-                    {/* is Required  */}
-                    <Dropdown
-                        id="isRequired"
-                        value={isRequiredOption}
-                        updateValue={updateValue}
-                        label="Is Required"
-                        options={isRequiredOptions}
-                    />
-                    {/* is Required  */}
-
-                    {/* default value */}
-                    <TextBox
-                        id="defaultValue"
-                        label="Default Value"
-                        ref={defaultValueRef}
-                        placeholder="Enter Default value"
-                    />
-                    {/* default value */}
-
-                    {messages.length > 0 && (
-                        <AlertsRed
-                            errors={messages}
-                            onClick={handleErrorClose}
+                    {toast && (
+                        <Toast
+                            type={toast.type}
+                            message={toast.message}
+                            onClose={() => setToast(null)}
                         />
                     )}
-                    <div className="flex justify-center mt-2">
-                        <Button1 title="Add" onClick={addAttribute} />
+
+                    <div className="md:p-6 flex flex-wrap gap-5 xl:gap-10">
+                        <Button1
+                            title={isEditing ? "Update Attribute" : "Add Attribute"}
+                            onClick={handleSubmit}
+                        />
                     </div>
                 </div>
             </form>

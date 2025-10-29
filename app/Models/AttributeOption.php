@@ -18,9 +18,9 @@ class AttributeOption extends Model
     protected $fillable = ['attributeId'];
 
 
-    public function attributeOptionValue()
+    public function values()
     {
-        return $this->hasMany(AttributeOptionValue::class, 'optionId');
+        return $this->hasOne(AttributeOptionValue::class, 'optionId');
     }
 
     public function attribute()

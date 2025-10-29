@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import Label from "./Label";
 
 export interface DropdownOption {
@@ -7,42 +7,44 @@ export interface DropdownOption {
 }
 
 interface DropdownProps {
-    label: string;
+    label?: string;
     id: string;
     placeholder?: string;
     value?: string;
     options: DropdownOption[];
-    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
     required?: boolean;
-    updateValue: (newValue: string, id: string) => void;
+    updateValue?: (newValue: string, id: string) => void;
 }
 
 const Dropdown: React.FC<DropdownProps> = ({
     label,
     id,
     placeholder = "",
-    value,
+    value = "",
     onChange,
     options = [],
     required = false,
     updateValue,
 }) => {
-    const [selectedOption, setSelectedOption] = useState<string>("");
-    const [isOptionSelected, setIsOptionSelected] = useState<boolean>(false);
+    const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        if (onChange) {
+            onChange(e);
+        }
+        if (updateValue) {
+            updateValue(e.target.value, id);
+        }
+    };
+
     return (
         <div className="mb-4.5 gap-4 relative flex items-center gap-4 p-4">
-            <Label id={id} label={label} />
+            {label && <Label id={id} label={label} />}
             <div className="relative z-20 bg-transparent dark:bg-form-input w-full flex-1">
                 <select
-                    value={selectedOption}
-                    onChange={(e) => {
-                      setSelectedOption(e.target.value);
-                      setIsOptionSelected(true);
-                      updateValue(e.target.value, id);
-                    }}
-                    className={`relative z-20 w-full appearance-none rounded border border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary ${
-                        isOptionSelected ? "text-black dark:text-white" : ""
-                    }`}
+                    value={value}
+                    onChange={handleChange}
+                    required={required}
+                    className={`relative z-20 w-full appearance-none rounded border border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary ${value ? "text-black dark:text-white" : ""}`}
                 >
                     {placeholder && (
                         <option
@@ -55,13 +57,14 @@ const Dropdown: React.FC<DropdownProps> = ({
                     )}
                     {options.map((item) => (
                         <option
+                            key={item.key}
                             value={item.key}
                             className="text-body dark:text-bodydark"
-                        >
+                         >
                             {item.value}
-                        </option>
+                         </option>
                     ))}
-                </select>
+                 </select>
 
                 <span className="absolute top-1/2 right-4 z-30 -translate-y-1/2">
                     <svg
